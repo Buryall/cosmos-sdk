@@ -38,6 +38,7 @@ var (
 	flagNodeDaemonHome    = "node-daemon-home"
 	flagNodeCliHome       = "node-cli-home"
 	flagStartingIPAddress = "starting-ip-address"
+	flagBaseport          = "base-port" // cmdpos
 )
 
 const nodeDirPerm = 0755
@@ -87,6 +88,7 @@ Example:
 		server.FlagMinGasPrices, fmt.Sprintf("0.000006%s", sdk.DefaultBondDenom),
 		"Minimum gas prices to accept for transactions; All fees in a tx must meet this minimum (e.g. 0.01photino,0.001stake)",
 	)
+	cmd.Flags().Int(flagBaseport, 20056, "testnet base port") // cmdpos
 
 	return cmd
 }
@@ -140,7 +142,7 @@ func initTestnet(config *tmconfig.Config, cdc *codec.Codec) error {
 		monikers = append(monikers, nodeDirName)
 		config.Moniker = nodeDirName
 
-		ip, err := getIP(i, viper.GetString(flagStartingIPAddress))
+		ip, err := getIP(0, viper.GetString(flagStartingIPAddress))
 		if err != nil {
 			_ = os.RemoveAll(outDir)
 			return err
@@ -152,7 +154,9 @@ func initTestnet(config *tmconfig.Config, cdc *codec.Codec) error {
 			return err
 		}
 
-		memo := fmt.Sprintf("%s@%s:26656", nodeIDs[i], ip)
+		baseport := viper.GetInt(flagBaseport)
+		port := baseport + i*100
+		memo := fmt.Sprintf("%s@%s:%d", nodeIDs[i], ip, port)
 		genFiles = append(genFiles, config.GenesisFile())
 
 		buf := client.BufferStdin()
@@ -191,12 +195,12 @@ func initTestnet(config *tmconfig.Config, cdc *codec.Codec) error {
 			return err
 		}
 
-		accTokens := sdk.TokensFromTendermintPower(1000)
+		//accTokens := sdk.TokensFromTendermintPower(1000)
 		accStakingTokens := sdk.TokensFromTendermintPower(500)
 		accs = append(accs, app.GenesisAccount{
 			Address: addr,
 			Coins: sdk.Coins{
-				sdk.NewCoin(fmt.Sprintf("%stoken", nodeDirName), accTokens),
+				//sdk.NewCoin(fmt.Sprintf("%stoken", nodeDirName), accTokens),
 				sdk.NewCoin(sdk.DefaultBondDenom, accStakingTokens),
 			},
 		})
